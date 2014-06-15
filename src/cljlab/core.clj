@@ -13,8 +13,10 @@
 ;; limitations under the License.
 
 (ns cljlab.core
+  (:refer-clojure :exclude [eval type])
   (:import [matlabcontrol MatlabProxyFactory MatlabProxyFactoryOptions$Builder]
            [dk.ange.octave OctaveEngineFactory]
+           [dk.ange.octave.exception OctaveIOException]
            [dk.ange.octave.type OctaveString]
            [dk.ange.octave.type.matrix AbstractGenericMatrix]))
 
@@ -25,7 +27,7 @@
     (lab :type)
     :matlab))
 
-(defmulti create-handle 
+(defmulti create-handle
   "Creates a handle to a lab instance"
   type)
 
@@ -46,17 +48,20 @@
   "Returns a map that can be used to communicate with the *lab instance"
   [& {type :type, :as options :or {type :matlab}}]
   {:type type
-   :handle (future (create-handle (or options {:type type})))})
+   :handle (future (create-handle (or options {:type type})))
+   :open true})
 
 (defmulti disconnect
   "Disconnect from the lab without exiting, if this is possible"
   type)
 
 (defmethod disconnect :matlab
+  disconnect-matlab
   [lab]
   (.disconnect @(lab :handle)))
 
 (defmethod disconnect :octave
+  disconnect-octave
   [lab]
   (.close @(lab :handle)))
 
@@ -65,11 +70,15 @@
   type)
 
 (defmethod exit :matlab
+  disconnect-matlab
   [lab]
-  (.exit @(lab :handle)))
+  (doto @(lab :handle)
+    (.exit)
+    (.disconnect)))
 
 ;; exit and disconnect are the same for Octave
 (defmethod exit :octave
+  disconnect-octave
   [lab]
   (disconnect lab))
 
@@ -78,22 +87,44 @@
   type)
 
 (defmethod eval :matlab
+  eval-matlab
   [lab code]
   (.eval @(lab :handle) code))
 
 (defmethod eval :octave
+  eval-octave
   [lab code]
   (.eval @(lab :handle) code))
 
-(defmulti get
+(defmulti open?
+  "Returns true if this lab is still in operation"
+  type)
+
+(defmethod open? :matlab
+  open?-matlab
+  [lab]
+  (.isConnected @(lab :handle)))
+
+(defmethod open? :octave
+  open?-octave
+  [lab]
+  (try (do
+         (eval lab "1;")
+         true)
+       (catch OctaveIOException e false)
+       (catch java.util.concurrent.RejectedExecutionException e false)))
+
+(defmulti get-basic
   "Returns a single variable. Can only handle flat arrays and strings"
   type)
 
-(defmethod get :matlab
+(defmethod get-basic :matlab
+  get-basic-matlab
   [lab variable]
   (.getVariable @(lab :handle) variable))
 
-(defmethod get :octave
+(defmethod get-basic :octave
+  get-basic-octave
   [lab variable]
   (let [octave-obj (.get @(lab :handle) variable)]
        (cond
@@ -101,11 +132,12 @@
         (instance? OctaveString octave-obj) (.getString octave-obj)
         :else nil)))
 
-(defmulti set
-  "Sets a single variable.  Can only handle flat collections"
+(defmulti set-basic
+  "Sets a single variable.  Can only handle flat arrays and strings"
   type)
 
-(defmethod set :matlab
+(defmethod set-basic :matlab
+  set-basic-matlab
   [lab variable value]
   (.setVariable @(lab :handle) variable
                 (if (seq? value)

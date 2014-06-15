@@ -13,22 +13,38 @@
 ;; limitations under the License.
 
 (ns cljlab.core-test
+  (:use midje.sweet)
   (:require [clojure.test :refer :all]
             [cljlab.core :as cl]))
 
-(deftest can-open
-  (testing "MATLAB"
-    (testing "not nil"
-      (is (not (nil? (cl/open :type :matlab)))))
-    (let [lab (cl/open :type :matlab)]
-      (testing "is a MATLAB lab"
-        (is (lab :type) :matlab)
-        (is (instance? matlabcontrol.MatlabProxy @(lab :handle))))))
+(def lab (atom nil))
 
-  (testing "Octave"
-    (testing "not nil"
-      (is (not (nil? (cl/open :type :octave)))))
-    (let [lab (cl/open :type :octave)]
-      (testing "is an Octave lab"
-        (is (lab :type) :octave)
-        (is (instance? dk.ange.octave.OctaveEngine @(lab :handle)))))))
+(tabular
+ (facts
+  (fact "`open` returns something"
+        (cl/open :type ?type) => truthy)
+
+  (facts "about the lab"
+         (with-state-changes [(before :facts (reset! lab (cl/open :type ?type)))]
+
+           (fact "type is correct"
+                 (@lab :type) => ?type)
+
+           (fact "handle is a future"
+                 (is (future? (@lab :handle))))
+
+           (facts "about `open?`"
+                  (fact "initially true"
+                        (cl/open? @lab) => true)
+
+                  (fact "false after exit"
+                        (do
+                          (cl/exit @lab)
+                          (cl/open? @lab)) => false)
+
+                  (fact "false after disconnect"
+                        (do
+                          (cl/disconnect @lab)
+                          (cl/open? @lab)) => false)))))
+
+ ?type :matlab :octave)
