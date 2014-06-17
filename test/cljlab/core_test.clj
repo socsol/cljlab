@@ -24,6 +24,18 @@
   (fact "`open` returns something"
         (cl/open :type ?type) => truthy)
 
+  (fact "`exit` can be called many times without issue"
+        (doto (cl/open :type ?type)
+              (cl/exit)
+              (cl/exit)
+              (cl/exit)) =not=> (throws java.lang.Exception))
+
+  (fact "`disconnect` can be called many times without issue"
+        (doto (cl/open :type ?type)
+              (cl/disconnect)
+              (cl/disconnect)
+              (cl/disconnect)) =not=> (throws java.lang.Exception))
+
   (facts "about the lab"
          (with-state-changes [(before :facts (reset! lab (cl/open :type ?type)))]
 

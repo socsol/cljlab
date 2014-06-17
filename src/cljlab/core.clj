@@ -14,7 +14,7 @@
 
 (ns cljlab.core
   (:refer-clojure :exclude [eval type])
-  (:import [matlabcontrol MatlabProxyFactory MatlabProxyFactoryOptions$Builder]
+  (:import [matlabcontrol MatlabInvocationException MatlabProxyFactory MatlabProxyFactoryOptions$Builder]
            [dk.ange.octave OctaveEngineFactory]
            [dk.ange.octave.exception OctaveIOException]
            [dk.ange.octave.type OctaveString]
@@ -63,7 +63,8 @@
 (defmethod disconnect :octave
   disconnect-octave
   [lab]
-  (.close @(lab :handle)))
+  (try (.close @(lab :handle))
+       (catch OctaveIOException e nil)))
 
 (defmulti exit
   "Close and exit the lab"
@@ -72,9 +73,10 @@
 (defmethod exit :matlab
   disconnect-matlab
   [lab]
-  (doto @(lab :handle)
-    (.exit)
-    (.disconnect)))
+  (try (doto @(lab :handle)
+         (.exit)
+         (.disconnect))
+       (catch MatlabInvocationException e nil)))
 
 ;; exit and disconnect are the same for Octave
 (defmethod exit :octave
