@@ -6,7 +6,7 @@ This library an interface to MATLAB and GNU Octave from within
 Clojure.  This is done by leveraging two existing Java libraries,
 [matlabcontrol][mc] and [JavaOctave][jo].  The point of this library
 is to smooth over the differences between these two libraries so that
-you can interface with whichever \*lab interface is available.
+you can interface with whichever \*lab is available.
 
 A lot of work still needs to be done on ferrying more complex
 datatypes to/from Clojure.  At present, the following work:
@@ -53,18 +53,28 @@ blocks for a more complete interface in the future.
 (require '[cljlab :as cl])
 
 (def my-lab (cl/open)) ;; will use either MATLAB or Octave, depending on availability
-
 (cl/type my-lab) ;; returns :matlab or :octave
 
-(cl/eval my-lab "x = 1;") ;; returns nil unless something goes awry
-(cl/get-basic my-lab :x) ;; returns a list of doubles.  i.e. '(1.0)
-(cl/set-basic my-lab :y (range 0 100 0.5)) ;; puts a list of doubles into the lab
-(cl/get-basic my-lab :y) ;; should match (range 0 100 0.5)
+(def my-ml (cl/open {:type :matlab}))
+(def my-oct (cl/open {:type :octave}))
+
+(cl/eval my-lab "x = 1;") ;; => nil
+(cl/get-basic my-lab :x) ;; => (1.0); i.e. a list of doubles.
+
+(cl/set-basic my-lab :y (range 0 100 0.5)) ;; => nil; puts a list of doubles into the lab
+(cl/get-basic my-lab :y) ;; => (range 0 100 0.5)
 
 (cl/set-basic my-lab :some_str "Testing 1 2 3\n") ;; puts a flat string into some_str in the lab
 (cl/eval my-lab "fprintf(some_str);" ;; Won't see anything as stdin/out are not connected up
 
-(cl/exit my-lab) ;; If you don't do this, the instance will continue to run
+(cl/open? my-lab) ;; => true
+
+(cl/exit my-lab) ;; Kills the lab
+
+(cl/open? my-lab) ;; => false
+
+(cl/disconnect my-ml) ;; Should leave the lab running after Java exits
+(cl/open? my-ml) ;; => false
 ~~~
 
 
