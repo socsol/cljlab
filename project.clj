@@ -1,6 +1,6 @@
 (defproject cljlab "0.1.0"
   :description "Interface to MATLAB and GNU Octave from Clojure"
-  :url "http://example.com/FIXME"
+  :url "https://github.com/socsol/cljlab"
   :license {:name "Apache Licence, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :repositories [["javaoctave" "https://kenai.com/svn/javaoctave~maven-repository/maven2"]]
