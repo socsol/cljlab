@@ -13,20 +13,11 @@
 ;; limitations under the License.
 
 (ns cljlab.expr
-  (:refer-clojure :rename {name core-name})
   (:require [clojure.string :as str]))
 
 ;; These are used to refer to parts of a matrix, cell, etc.
-(def end ::end)
-(def all ::all)
-
-(defn name
-  "Returns a string version of the variable or constant"
-  [thing]
-  (case thing
-    end "end"
-    all ":"
-    (core-name thing)))
+(def end "end")
+(def all ":")
 
 (defn placeholder-assignment
   "Evaluates an assignment involving placeholders"
@@ -72,7 +63,7 @@
 (defn cmd
   "Builds a command"
   [command & params]
-  (str/join " " (cons (name command) params)))
+  (str/join " " (cons (name command) (map name params))))
 
 (defn generate-placeholders
   "returns a lazy sequence of placeholders for a given prefix"

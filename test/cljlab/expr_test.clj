@@ -40,14 +40,14 @@
       (expr/placeholder-braces-assignment [:a :b] :c [:d :e]) => "[a,b] = c{d,e}"
       (expr/placeholder-braces-assignment [:__cljlab_out1__ :__cljlab_out2__] :__cljlab_in__ [":" :y]) => "[__cljlab_out1__,__cljlab_out2__] = __cljlab_in__{:,y}")
 
-(fact "`clear-command` correctly builds a `clear` command"
-      (expr/clear-command :a) => "clear a"
-      (expr/clear-command :testing123) => "clear testing123"
-      (expr/clear-command :__cljlab_in*__) => "clear __cljlab_in*__")
+(fact "`cmd` correctly builds a command"
+      (expr/cmd :a) => "a"
+      (expr/cmd :disp :testing123) => "disp testing123"
+      (expr/cmd :clear :cljlab__0__in* :cljlab__0__out*) => "clear cljlab__0__in* cljlab__0__out*")
 
 (fact "`generate-placeholders` creates a lazy seq of placeholder keywords"
-      (seq? (expr/generate-placeholders :a)) => truthy
-      (take 5 (expr/generate-placeholders :a)) => (list :__cljlab_a0__ :__cljlab_a1__ :__cljlab_a2__ :__cljlab_a3__ :__cljlab_a4__))
+      (seq? (expr/generate-placeholders 0 :a)) => truthy
+      (take 5 (expr/generate-placeholders 0 :a)) => (list :cljlab__0__a0__ :cljlab__0__a1__ :cljlab__0__a2__ :cljlab__0__a3__ :cljlab__0__a4__))
 
 (fact "`sc` adds a semicolon to the end of a string"
       (expr/sc "test") => "test;")

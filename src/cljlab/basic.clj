@@ -135,7 +135,6 @@
 (defmethod eval :matlab
   eval-matlab
   [lab code]
-  (println code)
   (.eval (interface lab) code))
 
 (defmethod eval :octave

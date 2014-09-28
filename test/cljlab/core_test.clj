@@ -86,7 +86,8 @@
   [expected]
   (checker [lab] (= (b/type lab) expected)))
 
-;; These tests aren't very good, but stubbing `open` doesn't seem to
+;; These tests aren't very good (depends on matlab being available),
+;; but stubbing `open` doesn't seem to
 ;; work.
 (facts "about `open`"
        (fact "`open` using :auto type will use matlab if available"

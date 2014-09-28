@@ -18,13 +18,14 @@
             [cljlab.expr :as expr]))
 
 (defn eval-cmd
+  "calls eval on a command"
   [lab & rest]
-  (b/eval lab (expr/cmd rest)))
+  (b/eval lab (apply expr/cmd rest)))
 
 (defn clear
   "clears variables from the lab"
   [lab & vars]
-  (doall (map #(apply eval-cmd lab :clear %) vars)))
+  (apply eval-cmd lab :clear vars))
 
 (defn eval-expr
   "calls eval on an expressions with a semi-colon at the end"
@@ -36,13 +37,9 @@
   afterwards and returns the result of evaluating the last form"
   [lab placeholders & forms]
   `(let [return# (do ~@forms)]
-     (apply clear ~lab ~placeholders)
+     (if-not (empty? ~placeholders)
+       (apply clear ~lab ~placeholders))
      return#))
-
-(defn assign-value
-  [lab placeholder val]
-  (case val
-    expr/all 
 
 (defn eval-assignment-expr
   "Evaluates an assignment expression and returns the assigned values"
@@ -74,7 +71,7 @@
   (let [in-placeholders (take (count basic-vals) (expr/generate-placeholders level :in))]
     (with-placeholders lab in-placeholders
       (doall (map #(b/set lab %1 %2) in-placeholders basic-vals))
-      (call-fn-with-vars lab level nret fn-name in-placeholders))))
+      (apply call-fn-with-vars lab level nret fn-name in-placeholders))))
 
 (defn size
   "Returns the size of a variable in the *lab, specified by its name"
@@ -110,20 +107,20 @@
   bracket-class)
 
 (defn get-part-basic-vars-with-expr
-  [f lab level var]
+  [expr lab level var coords]
   (let [placeholder (first (expr/generate-placeholders level :get_part))]
     (with-placeholders lab [placeholder]
       (eval-assignment-expr lab level [placeholder]
-                            (f [placeholder] var coords)))))
+                            (expr [placeholder] var coords)))))
 
 (defmethod get-part-basic-vars :parentheses
-  get-part-parentheses
+  get-part-basic-vars-parentheses
   [& params]
-  (apply get-part-with expr/placeholder-parentheses-assignment
+  (apply get-part-basic-vars-with-expr expr/placeholder-parentheses-assignment
          params))
 
 (defmethod get-part-basic-vars :braces
-  get-part-string
+  get-part-basic-vars-braces
   [& params]
-  (apply get-part-with expr/placeholder-braces-assignment
+  (apply get-part-basic-vars-with-expr expr/placeholder-braces-assignment
          params))

@@ -28,8 +28,8 @@
 (def open? b/open?)
 (def eval b/eval)
 
-(def all util/all)
-(def end util/end)
+(def all expr/all)
+(def end expr/end)
 
 (defn class [lab & params]
   (apply util/class lab 0 params))
@@ -85,7 +85,7 @@
           (= rows 1)) (b/get lab level var)
 
      ;; otherwise, get each slice
-     :else (map #(util/get-part lab level var [% all]) (range rows)))))
+     :else (map #(util/get-part-basic-vars lab level var [% all]) (range rows)))))
 
 (defn set
   "Sets the value of a *lab variable using a reverse of the mapping used by `get`"
