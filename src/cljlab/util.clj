@@ -92,8 +92,7 @@
 (defmulti bracket-class
   "Returns the kind of brackets that should be used to address parts
   of the given structure"
-  (fn [lab level var & rest] 
-    (println var)
+  (fn [lab level var & rest]
     (class lab level var)))
 
 (defmethod bracket-class :double  [& _] :parentheses)
@@ -102,25 +101,25 @@
 (defmethod bracket-class :struct  [& _] :parentheses)
 (defmethod bracket-class :cell    [& _] :braces)
 
-(defmulti get-part-basic-vars
+(defmulti get-var-part-basic-val
   "Returns part of an object that can be retrieved as a basic val using basic vars"
   bracket-class)
 
-(defn get-part-basic-vars-with-expr
+(defn get-var-part-basic-val-with-expr
   [expr lab level var coords]
   (let [placeholder (first (expr/generate-placeholders level :get_part))]
     (with-placeholders lab [placeholder]
-      (eval-assignment-expr lab level [placeholder]
-                            (expr [placeholder] var coords)))))
+      (first (eval-assignment-expr lab level [placeholder]
+                                   (expr [placeholder] var coords))))))
 
-(defmethod get-part-basic-vars :parentheses
-  get-part-basic-vars-parentheses
+(defmethod get-var-part-basic-val :parentheses
+  get-var-part-basic-val-parentheses
   [& params]
-  (apply get-part-basic-vars-with-expr expr/placeholder-parentheses-assignment
+  (apply get-var-part-basic-val-with-expr expr/placeholder-parentheses-assignment
          params))
 
-(defmethod get-part-basic-vars :braces
-  get-part-basic-vars-braces
+(defmethod get-var-part-basic-val :braces
+  get-var-part-basic-val-braces
   [& params]
-  (apply get-part-basic-vars-with-expr expr/placeholder-braces-assignment
+  (apply get-var-part-basic-val-with-expr expr/placeholder-braces-assignment
          params))

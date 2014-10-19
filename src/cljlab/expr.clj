@@ -13,11 +13,19 @@
 ;; limitations under the License.
 
 (ns cljlab.expr
+  (:refer-clojure :rename {name core-name})
   (:require [clojure.string :as str]))
 
 ;; These are used to refer to parts of a matrix, cell, etc.
 (def end "end")
 (def all ":")
+
+(defn name
+  "A stand-in for clojure.core/name that leaves numbers alone"
+  [thing]
+  (if (number? thing)
+    (str thing)
+    (core-name thing)))
 
 (defn placeholder-assignment
   "Evaluates an assignment involving placeholders"

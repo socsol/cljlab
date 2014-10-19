@@ -15,6 +15,7 @@
 (ns cljlab.util-test
   (:use midje.sweet)
   (:require [cljlab.basic :as b]
+            [cljlab.expr :as expr]
             [cljlab.util :as util]))
 
 (fact "`clear` executes `clear` commands on the lab"
@@ -71,3 +72,12 @@
       (util/class :my-lab 0 :z) => :double
       (provided
        (util/call-fn-with-vars :my-lab 0 1 :class :z) => '("double")))
+
+(facts "about `get-var-part-basic-val`"
+       "with a string, can return any row"
+       (util/get-var-part-basic-val :my-lab 0 :x ["1" expr/all]) => "test"
+       (provided
+        (util/class :my-lab 0 :x) => :char
+        (b/eval :my-lab "[cljlab__0__get_part0__] = x(1,:);") => nil
+        (b/get :my-lab :cljlab__0__get_part0__) => "test"
+        (b/eval :my-lab "clear cljlab__0__get_part0__") => nil))

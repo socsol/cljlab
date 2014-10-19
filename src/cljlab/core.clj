@@ -41,15 +41,49 @@
   "Used internally to retrieve multi-level datastructures"
   util/class)
 
-(defn get [lab & params]
+(defn get
   "Returns the value of a *lab variable mapped to Clojure datastructures"
+  [lab & params]
   (apply get-with-level lab 0 params))
 
+(defn reshape-with
+  "Rearranges a flat seq in column-major order using the given
+  function to construct the innermost elements"
+  [f x dims]
+  ((fn reshape1 [off spc dims]
+     (if (= 1 (count dims))
+       ;; Make a single len-long seq containing every
+       ;; spc'th item
+       (f off spc dims)
+
+       ;; Make sub-sequences
+       (vec (map #(reshape1 (+ off (* spc %))
+                            (* (first dims) spc)
+                            (rest dims))
+                 (range (first dims))))))
+   0 1 dims))
+
+(defn reshape
+  "Rearranges a flat seq into column-major order into a nested row major
+  vector"
+  [x dims]
+  (reshape-with (fn [off spc dims]
+                  (vec (take (first dims) (take-nth spc (drop off x)))))
+                x dims))
+
+(defn reshape-str
+  "Rearranges a flat string into column-major order into a nested row major
+  vector"
+  [x dims]
+  (reshape-with (fn [off spc dims]
+                  (str/join (take (first dims) (take-nth spc (drop off x)))))
+                x dims))
+
 (defmethod get-with-level :double
-  get-double
+  get-with-level-double
   [lab level var]
   (let [raw (b/get lab var)
-        dims (size lab level var)
+        dims (util/size lab level var)
         ndims (count dims)]
     (cond
      ;; a single item
@@ -60,32 +94,27 @@
           (= (first dims) 1)) (vec raw)
 
      ;; otherwise, need to construct a nested row-major array.
-     :else (let [sep (reduce * (butlast dims))]
-             ((fn recurse-array [position array-level]
-                (if (= array-level (dec ndims))
-                  ;; Make a single len-long vector containing every sep'th
-                  ;; item
-                  (vec (take-nth sep (drop (reduce + position) raw)))
-
-                  ;; Make (nth dims-reordered level)-many sub-seqs
-                  (vec (map #(recurse-array (conj position %) (inc array-level))
-                            (range (nth dims array-level))))))
-              [] 0)))))
+     :else (reshape raw dims))))
 
 (defmethod get-with-level :char
-  get-char
+  get-with-level-char
   [lab level var]
-  (let [dims (size lab level var)
+  (let [dims (util/size lab level var)
         ndims (count dims)
         rows (first dims)]
     (cond
 
      ;; a plain string -- passthrough
      (and (= ndims 2)
-          (= rows 1)) (b/get lab level var)
+          (= rows 1)) (b/get lab var)
 
-     ;; otherwise, get each slice
-     :else (map #(util/get-part-basic-vars lab level var [% all]) (range rows)))))
+     ;; otherwise, convert to column-major form then reshape ... 
+     :else (reshape-str
+            (util/get-var-part-basic-val lab
+                                         level
+                                         var
+                                         [all])
+            dims))))
 
 (defn set
   "Sets the value of a *lab variable using a reverse of the mapping used by `get`"
