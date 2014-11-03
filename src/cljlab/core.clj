@@ -31,6 +31,9 @@
 (def all expr/all)
 (def end expr/end)
 
+(def get-basic b/get)
+(def set-basic b/get)
+
 (defn class [lab & params]
   (apply util/class lab 0 params))
 
@@ -116,7 +119,7 @@
                                          [all])
             dims))))
 
-(defn set
-  "Sets the value of a *lab variable using a reverse of the mapping used by `get`"
-  [lab variable value]
-  nil)
+;; (defn set
+;;   "Sets the value of a *lab variable using a reverse of the mapping used by `get`"
+;;   [lab variable value]
+;;   nil)
