@@ -39,13 +39,45 @@
                     (provided
                      (util/call-fn-with-vars :my-lab 0 1 :class :x) => (list "char")
                      (util/size :my-lab 0 :x) => [2 2 4]
-                     (util/get-var-part-basic-val :my-lab 0 :x [cl/all]) => "aiembjfnckgodlhp"))))
+                     (util/get-var-part-basic-val :my-lab 0 :x [cl/all]) => "aiembjfnckgodlhp")))
 
-              ;; (tabular
-              ;;        (do
-              ;;          (cl/eval @lab ?code)
-              ;;          (cl/get @lab ?var)) => ?values)
-              ;;  ?code  ?var ?values
-              ;;  "[x,y,z] = meshgrid([1,2,3], [1,2,3], [1,2,3]);
+       (facts "for doubles"
+              (fact "it returns single elements as scalars"
+                    (cl/get :my-lab :x) => 1.0
+                    (provided
+                     (util/call-fn-with-vars :my-lab 0 1 :class :x) => (list "double")
+                     (util/size :my-lab 0 :x) => [1 1]
+                     (b/get :my-lab :x) => (list 1.0)))
+
+
+              (fact "it returns row vectors as plain vectors"
+                    (cl/get :my-lab :x) => [1.0 2.0 3.0]
+                    (provided
+                     (util/call-fn-with-vars :my-lab 0 1 :class :x) => (list "double")
+                     (util/size :my-lab 0 :x) => [1 3]
+                     (b/get :my-lab :x) => (list 1.0 2.0 3.0)))
+
+              (fact "it returns column vectors as nested vectors"
+                    (cl/get :my-lab :x) => [[1.0] [2.0] [3.0]]
+                    (provided
+                     (util/call-fn-with-vars :my-lab 0 1 :class :x) => (list "double")
+                     (util/size :my-lab 0 :x) => [3 1]
+                     (b/get :my-lab :x) => (list 1.0 2.0 3.0)))
+
+              (fact "it returns 2D matrices as nested vectors"
+                    (cl/get :my-lab :x) => [[1.0 4.0] [2.0 5.0] [3.0 6.0]]
+                    (provided
+                     (util/call-fn-with-vars :my-lab 0 1 :class :x) => (list "double")
+                     (util/size :my-lab 0 :x) => [3 2]
+                     (b/get :my-lab :x) => (list 1.0 2.0 3.0 4.0 5.0 6.0)))
+
+              (fact "it returns 3D matrices as nested vectors"
+                    (cl/get :my-lab :x) => [[[1.0 10.0 19.0] [4.0 13.0 22.0] [7.0 16.0 25.0]]
+                                            [[2.0 11.0 20.0] [5.0 14.0 23.0] [8.0 17.0 26.0]]
+                                            [[3.0 12.0 21.0] [6.0 15.0 24.0] [9.0 18.0 27.0]]]
+                    (provided
+                     (util/call-fn-with-vars :my-lab 0 1 :class :x) => (list "double")
+                     (util/size :my-lab 0 :x) => [3 3 3]
+                     (b/get :my-lab :x) => (range 1.0 28.0)))))
 
                                 
