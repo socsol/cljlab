@@ -30,6 +30,11 @@
   [lab & _]
   (@lab :interface))
 
+(defn out
+  "Returns the stream used to write the lab's stdout to, or nil"
+  [lab & _]
+  (@lab :out))
+
 ;; Note that this multimethod does not expect to receive a ref.
 (defmulti create-interface
   "Creates a interface to a lab instance"
@@ -86,19 +91,14 @@
 
 (defmethod create-interface :octave
   create-interface-octave
-  [{debug :debug :or {debug false}}]
+  [{out :out err :err :or {out nil err nil}}]
   (let [factory (OctaveEngineFactory.)
         engine (.getScriptEngine factory)]
-    (if debug
-      (do
-        (doto factory
-          (.setOctaveInputLog *out*)
-          (.setErrorWriter *err*))
-        (doto engine
-          (.setWriter *out*)
-          (.setErrorWriter *err*)))
-      engine)))
-
+    (if out
+      (.setWriter engine out))
+    (if err
+      (.setErrorWriter engine err))
+    engine))
 
 (defmethod disconnect :matlab
   disconnect-matlab
@@ -135,7 +135,25 @@
 (defmethod eval :matlab
   eval-matlab
   [lab code]
-  (.eval (interface lab) code))
+  (let [file (if (out lab)
+               (java.io.File/createTempFile "cljlab" ".log")
+               nil)]
+    (try
+      (if file
+        (.eval (interface lab) (str "diary " (.getAbsolutePath file))))
+      (.eval (interface lab) code)
+      (finally (if file (do
+                          ;; Diary off, if possible
+                          (try (.eval (interface lab) "diary off")
+                               (catch Exception e nil)
+
+                               (finally
+                                 ;; Read the contents of the diary and relay to out
+                                 (with-open [rdr (clojure.java.io/reader file)]
+                                   (doall (map #(do (.write (out lab) (str % "\n"))) (line-seq rdr))))
+
+                                 ;; Delete the temporary file
+                                 (.delete file)))))))))
 
 (defmethod eval :octave
   eval-octave
