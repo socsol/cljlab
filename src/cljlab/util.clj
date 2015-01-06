@@ -70,7 +70,7 @@
   [lab level nret fn-name & basic-vals]
   (let [in-placeholders (take (count basic-vals) (expr/generate-placeholders level :in))]
     (with-placeholders lab in-placeholders
-      (doall (map #(b/set lab %1 %2) in-placeholders basic-vals))
+      (dorun (map #(b/set lab %1 %2) in-placeholders basic-vals))
       (apply call-fn-with-vars lab level nret fn-name in-placeholders))))
 
 (defn size

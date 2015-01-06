@@ -150,7 +150,7 @@
                                (finally
                                  ;; Read the contents of the diary and relay to out
                                  (with-open [rdr (clojure.java.io/reader file)]
-                                   (doall (map #(do (.write (out lab) (str % "\n"))) (line-seq rdr))))
+                                   (dorun (map #(do (.write (out lab) (str % "\n"))) (line-seq rdr))))
 
                                  ;; Delete the temporary file
                                  (.delete file)))))))))
